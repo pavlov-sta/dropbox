@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane fx:id="rootNode" minHeight="71.0" prefHeight="118.0" prefWidth="204.9998779296875" style="-fx-background-color: linear-gradient(#fff 0%, #eee 10%, #ddd 90%, #bbb 100%);" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="client.Login">
+  <children>
+    <TextField fx:id="username" layoutX="19.0" layoutY="24.0" prefWidth="167.0" promptText="enter login" />
+    <TextField fx:id="password" layoutX="19.0" layoutY="56.0" prefWidth="167.0" promptText="enter password" />
+    <Button fx:id="button" layoutX="84.0" layoutY="88.0" onAction="#pressAuthOk" text="OK" />
+  </children>
+</AnchorPane>

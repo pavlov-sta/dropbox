@@ -6,18 +6,17 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.awt.event.ActionEvent;
 
 public class MainClient extends Application {
-
     @Override
     public void start(Stage primaryStage) throws Exception {
-        FXMLLoader fxmlClient = new FXMLLoader(getClass().getResource("/client.fxml"));
+        FXMLLoader fxmlClient = new FXMLLoader(getClass().getResource("/main.fxml"));
         Parent root = fxmlClient.load();
         primaryStage.setTitle("Cloud");
         Scene scene = new Scene(root);
         primaryStage.setScene(scene);
         primaryStage.show();
+
     }
 
     public static void main(String[] args) {

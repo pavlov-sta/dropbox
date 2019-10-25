@@ -8,6 +8,7 @@ public class FileMessage extends AbstractMessage {
     private String filename;
     private byte[] data;
     private String operationType;
+    private String listName;
 
     public String getFilename() {
         return filename;
@@ -21,7 +22,12 @@ public class FileMessage extends AbstractMessage {
         return operationType;
     }
 
-    public FileMessage(Path path, String operationType) throws IOException {
+    public String getListName() {
+        return listName;
+    }
+
+    public FileMessage(Path path, String operationType, String listName) throws IOException {
+        this.listName = listName;
         this.operationType = operationType;
         filename = path.getFileName().toString();
         data = Files.readAllBytes(path);
