@@ -1,5 +1,7 @@
 package server;
 
+import common.AuthMessage;
+import common.AuthRequest;
 import common.FileMessage;
 import common.FileRequest;
 import io.netty.channel.ChannelHandlerContext;
@@ -11,6 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class MainHandler extends ChannelInboundHandlerAdapter {
+    private final String CLIENT_DIRECTORY = "client/src/main/client_storage/";
+    private final String SERVER_DIRECTORY = "server/src/main/server_storage/";
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -19,16 +23,38 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             if (msg == null) {
                 return;
             }
-            if (msg instanceof FileRequest) {
+            if(msg instanceof AuthRequest){
+                AuthRequest user = (AuthRequest) msg;
+                if (ClientAuth.authUser(user.getUsername(),user.getPassword())) {
+                    System.out.println("Start");
+                    ctx.writeAndFlush(new AuthMessage(true));
+                } else {
+                    System.out.println("No");
+                    ctx.writeAndFlush(new AuthMessage(false));
+                }
+            }else if (msg instanceof FileRequest) {
                 FileRequest fr = (FileRequest) msg;
                 if (fr.getOperationType().equals("UPLOAD")) {
-                    if (!Files.exists(Paths.get("server/src/main/server_storage/" + fr.getFilename()))) {
-                        FileMessage out = new FileMessage(Paths.get("client/src/main/client_storage/" + fr.getFilename()), "UPLOAD");
+                    if (!Files.exists(Paths.get(SERVER_DIRECTORY + fr.getFilename()))) {
+                        FileMessage out = new FileMessage(Paths.get(CLIENT_DIRECTORY + fr.getFilename()), "UPLOAD", null);
                         ctx.writeAndFlush(out);
                     }
-                } else if (Files.exists(Paths.get("server/src/main/client_storage/" + fr.getFilename()))) {
-                    FileMessage fm = new FileMessage(Paths.get("server/src/main/server_storage/" + fr.getFilename()), "DOWNLOAD");
-                    ctx.writeAndFlush(fm);
+                } else if (fr.getOperationType().equals("DOWNLOAD")) {
+                    if (!Files.exists(Paths.get(CLIENT_DIRECTORY + fr.getFilename()))) {
+                        FileMessage fm = new FileMessage(Paths.get(SERVER_DIRECTORY + fr.getFilename()), "DOWNLOAD", null);
+                        ctx.writeAndFlush(fm);
+                    }
+                } else if (fr.getOperationType().equals("DELETE")) {
+                    if (Files.exists(Paths.get(CLIENT_DIRECTORY + fr.getFilename())) || Files.exists(Paths.get(SERVER_DIRECTORY + fr.getFilename()))) {
+                        if (fr.getListViewName().equals("filesServerList")) {
+                            FileMessage fm = new FileMessage(Paths.get(SERVER_DIRECTORY + fr.getFilename()), "DELETE", "filesServerList");
+                            ctx.writeAndFlush(fm);
+                        } else {
+                            FileMessage fm = new FileMessage(Paths.get(CLIENT_DIRECTORY + fr.getFilename()), "DELETE", "filesList");
+                            ctx.writeAndFlush(fm);
+                        }
+
+                    }
                 }
             }
         } finally {

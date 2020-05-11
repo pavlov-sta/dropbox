@@ -1,6 +1,7 @@
 package client;
 
 import common.AbstractMessage;
+import common.AuthMessage;
 import io.netty.handler.codec.serialization.ObjectDecoderInputStream;
 import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
 
@@ -15,14 +16,19 @@ public class Network {
     private static Socket socket;
     private static ObjectEncoderOutputStream oeos = null;
     private static ObjectDecoderInputStream odis = null;
+    private static Network ourInstance = new Network();
+
+    public static Network getInstance() {
+        return ourInstance;
+    }
 
 
     public static void start() {
-        try  {
+        try {
             socket = new Socket("localhost", PORT);
             oeos = new ObjectEncoderOutputStream(socket.getOutputStream());
             odis = new ObjectDecoderInputStream(socket.getInputStream(), MAX_OBJ_SIZE);
-        }catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -59,5 +65,14 @@ public class Network {
         Object obj = odis.readObject();
         return (AbstractMessage) obj;
     }
+
+    public static void sendAuth(AbstractMessage object) {
+        try {
+            oeos.writeObject(object);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 }

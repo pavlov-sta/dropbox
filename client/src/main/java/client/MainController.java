@@ -6,15 +6,11 @@ import common.FileRequest;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
-import javafx.stage.Stage;
+import javafx.scene.layout.HBox;
 
-
+import java.awt.*;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -24,16 +20,17 @@ import java.util.ResourceBundle;
 
 
 public class MainController implements Initializable {
-
-
-    @FXML
-    TextField tfFileName;
+    private final String CLIENT_DIRECTORY = "client/src/main/client_storage/";
+    private final String SERVER_DIRECTORY = "server/src/main/server_storage/";
 
     @FXML
-    ListView<String> filesList;
+    HBox listView;
+    @FXML
+    ListView<String> filesList = new ListView<>();
 
     @FXML
-    ListView<String> filesServerList;
+    ListView<String> filesServerList = new ListView<>();
+
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -44,12 +41,20 @@ public class MainController implements Initializable {
                     AbstractMessage am = Network.readObject();
                     if (am instanceof FileMessage) {
                         FileMessage fm = (FileMessage) am;
-                        if (fm.getOperationType().equals("UPLOAD")){
-                            Files.write(Paths.get("server/src/main/server_storage/" + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
+                        if (fm.getOperationType().equals("UPLOAD")) {
+                            Files.write(Paths.get(SERVER_DIRECTORY + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
                             refreshLocalFilesList();
-                        } else if (fm.getOperationType().equals("DOWNLOAD")){
-                            Files.write(Paths.get("server/src/main/server_storage/" + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
+                        } else if (fm.getOperationType().equals("DOWNLOAD")) {
+                            Files.write(Paths.get(CLIENT_DIRECTORY + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
                             refreshLocalFilesList();
+                        } else if (fm.getOperationType().equals("DELETE")) {
+                            if (fm.getListName().equals("filesServerList")) {
+                                Files.delete(Paths.get(SERVER_DIRECTORY + fm.getFilename()));
+                                refreshLocalFilesList();
+                            } else {
+                                Files.delete(Paths.get(CLIENT_DIRECTORY + fm.getFilename()));
+                                refreshLocalFilesList();
+                            }
                         }
                     }
                 }
@@ -64,28 +69,49 @@ public class MainController implements Initializable {
         refreshLocalFilesList();
     }
 
-
     public void pressOnDownloadBtn(ActionEvent actionEvent) {
-        if (tfFileName.getLength() > 0) {
-            Network.sendMsg(new FileRequest(tfFileName.getText(),"DOWNLOAD"));
-            tfFileName.clear();
+        String value = "filesList";
+        if (filesServerList.getSelectionModel().getSelectedItems().get(0) != null) {
+            System.out.println(filesServerList.getSelectionModel().getSelectedItems().get(0));
+            Network.sendMsg(new FileRequest(filesServerList.getSelectionModel().getSelectedItems().get(0), "DOWNLOAD", value));
         }
     }
 
     public void pressOnSendBtn(ActionEvent actionEvent) {
-        if (tfFileName.getLength() > 0) {
-            Network.sendMsg(new FileRequest(tfFileName.getText(),"UPLOAD"));
-            tfFileName.clear();
+        String value = "filesServerList";
+        if (filesList.getSelectionModel().getSelectedItems().get(0) != null) {
+            Network.sendMsg(new FileRequest(filesList.getSelectionModel().getSelectedItems().get(0), "UPLOAD", value));
+        }
+
+    }
+
+    public void pressOnDeleteClien(ActionEvent actionEvent) {
+        String value = "filesList";
+        if (filesList.getSelectionModel().getSelectedItems().get(0) != null) {
+            Network.sendMsg(new FileRequest(filesList.getSelectionModel().getSelectedItems().get(0), "DELETE", value));
         }
     }
+
+    public void pressOnDeleteServer(ActionEvent actionEvent) {
+        String value = "filesServerList";
+        if (filesServerList.getSelectionModel().getSelectedItems().get(0) != null) {
+            Network.sendMsg(new FileRequest(filesServerList.getSelectionModel().getSelectedItems().get(0), "DELETE", value));
+        }
+
+    }
+
+    public void pressOnRefresh(ActionEvent actionEvent) {
+        refreshLocalFilesList();
+    }
+
 
     public void refreshLocalFilesList() {
         if (Platform.isFxApplicationThread()) {
             try {
                 filesList.getItems().clear();
-                Files.list(Paths.get("client/src/main/client_storage/")).map(p -> p.getFileName().toString()).forEach(o -> filesList.getItems().add(o));
+                Files.list(Paths.get(CLIENT_DIRECTORY)).map(p -> p.getFileName().toString()).forEach(o -> filesList.getItems().add(o));
                 filesServerList.getItems().clear();
-                Files.list(Paths.get("server/src/main/server_storage/")).map(p -> p.getFileName().toString()).forEach(o -> filesServerList.getItems().add(o));
+                Files.list(Paths.get(SERVER_DIRECTORY)).map(p -> p.getFileName().toString()).forEach(o -> filesServerList.getItems().add(o));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -93,15 +119,13 @@ public class MainController implements Initializable {
             Platform.runLater(() -> {
                 try {
                     filesList.getItems().clear();
-                    Files.list(Paths.get("client/src/main/client_storage")).map(p -> p.getFileName().toString()).forEach(o -> filesList.getItems().add(o));
+                    Files.list(Paths.get(CLIENT_DIRECTORY)).map(p -> p.getFileName().toString()).forEach(o -> filesList.getItems().add(o));
                     filesServerList.getItems().clear();
-                    Files.list(Paths.get("server/src/main/server_storage/")).map(p -> p.getFileName().toString()).forEach(o -> filesServerList.getItems().add(o));
+                    Files.list(Paths.get(SERVER_DIRECTORY)).map(p -> p.getFileName().toString()).forEach(o -> filesServerList.getItems().add(o));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             });
         }
     }
-
-
 }
